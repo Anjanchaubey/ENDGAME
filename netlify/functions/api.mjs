@@ -62,7 +62,8 @@ export const handler = async (event) => {
   const requestPath = req.path || '';
   if (method === 'OPTIONS') return { statusCode: 204, headers: corsHeaders, body: '' };
   try {
-    const store = db(), route = requestPath.replace(/^\/.netlify\/functions\/api\/?/, '').replace(/^api\/v1\/?/, '');
+    const route = requestPath.replace(/^\/+/, '').replace(/^\.netlify\/functions\/api\/?/, '').replace(/^api\/v1\/?/, '');
+    const store = db();
     if (method === 'POST' && route === 'keys') {
       const session = await authenticate(req, store); if (session.error) return session.error;
       if (session.mode !== 'session') return response(403, { error: 'A signed-in session is required' });
