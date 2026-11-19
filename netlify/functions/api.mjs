@@ -2,7 +2,7 @@ import { createHash, randomBytes } from 'node:crypto';
 import { cert, getApps, initializeApp } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
 import { FieldValue, getFirestore, Timestamp } from 'firebase-admin/firestore';
-import { connectTodoist, deleteTodoistTask, disconnectTodoist, pushTaskToTodoist, syncTodoist, todoistStatus } from './todoist-service.mjs';
+import { connectTodoist, deleteAllTodos, deleteTodoistTask, disconnectTodoist, pushTaskToTodoist, syncTodoist, todoistStatus } from './todoist-service.mjs';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': process.env.ALLOWED_ORIGIN || 'null',
@@ -94,6 +94,10 @@ export const handler = async (event) => {
         const body = JSON.parse(req.body || '{}');
         try { return response(200, await deleteTodoistTask(store, session.uid, String(body.taskId || ''))); }
         catch { return response(502, { error: 'Could not delete the matching Todoist task. Nothing was deleted in ENDGAME.' }); }
+      }
+      if (method === 'POST' && route === 'todoist/tasks/delete-all') {
+        try { return response(200, await deleteAllTodos(store, session.uid)); }
+        catch { return response(502, { error: 'Could not safely delete the to-do list. Nothing was deleted in ENDGAME.' }); }
       }
       if (method === 'DELETE' && route === 'todoist') return response(200, await disconnectTodoist(store, session.uid));
       return response(404, { error: 'Todoist route not found' });

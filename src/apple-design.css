@@ -942,3 +942,13 @@ input, textarea, select { max-width: 100%; }
 .todoist-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
 .todoist-connected { display: inline-flex; align-items: center; gap: 8px; margin-right: auto; color: #30d158; font-size: 13px; font-weight: 650; }
 .todoist-connected i { width: 8px; height: 8px; border-radius: 50%; background: currentColor; box-shadow: 0 0 10px rgba(48,209,88,.45); }
+.delete-all-controls { display: flex; justify-content: flex-end; margin: 5px 0 24px; }
+.delete-all-secret { display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-height: 44px; padding: 0 11px; color: var(--muted); background: transparent; border: 0; border-radius: 12px; opacity: .65; font-size: 12px; }
+.delete-all-secret:hover:not(:disabled), .delete-all-secret:focus-visible { color: #ff453a; background: color-mix(in srgb, #ff453a 10%, transparent); opacity: 1; }
+.delete-all-secret:disabled { opacity: .3; }
+.delete-all-form { display: grid; gap: 18px; }
+.delete-all-form>p { margin: 0; color: var(--muted); line-height: 1.55; }
+.delete-all-form>p b { color: var(--ink); font-variant-numeric: tabular-nums; }
+.delete-all-form .field-label code { justify-self: start; padding: 5px 9px; color: var(--ink); background: var(--surface-raised); border-radius: 8px; font-size: 15px; letter-spacing: .06em; }
+.danger-button { min-height: 44px; padding: 0 15px; color: #fff; background: #ff453a; border: 0; border-radius: 12px; font-weight: 650; }
+.danger-button:disabled { opacity: .45; cursor: not-allowed; }

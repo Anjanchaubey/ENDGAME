@@ -125,6 +125,28 @@ export async function deleteTodoistTask(store, uid, taskId) {
   return { deleted: true };
 }
 
+export async function deleteAllTodos(store, uid) {
+  const snapshot = await tasksRef(store, uid).get();
+  const integration = await integrationRef(store, uid).get();
+  const api = integration.exists ? await apiForUser(store, uid) : null;
+  const failedRemoteIds = new Set();
+  if (api) {
+    for (const taskDoc of snapshot.docs) {
+      const remoteId = taskDoc.data().todoistTaskId;
+      if (!remoteId) continue;
+      try { await api.deleteTask(String(remoteId)); }
+      catch { failedRemoteIds.add(String(remoteId)); }
+    }
+  }
+  const removable = snapshot.docs.filter(taskDoc => !failedRemoteIds.has(String(taskDoc.data().todoistTaskId || '')));
+  for (let start = 0; start < removable.length; start += 450) {
+    const batch = store.batch();
+    for (const taskDoc of removable.slice(start, start + 450)) batch.delete(taskDoc.ref);
+    await batch.commit();
+  }
+  return { deleted: removable.length, failed: snapshot.size - removable.length };
+}
+
 export async function syncTodoist(store, uid) {
   const api = await apiForUser(store, uid);
   const now = new Date();
