@@ -1,5 +1,7 @@
 import { createHash, randomBytes } from 'node:crypto';
-import admin from 'firebase-admin';
+import { cert, getApps, initializeApp } from 'firebase-admin/app';
+import { getAuth } from 'firebase-admin/auth';
+import { FieldValue, getFirestore, Timestamp } from 'firebase-admin/firestore';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': process.env.ALLOWED_ORIGIN || 'null',
@@ -10,12 +12,12 @@ const corsHeaders = {
 };
 function response(statusCode, body) { return { statusCode, headers: corsHeaders, body: JSON.stringify(body) }; }
 function db() {
-  if (!admin.apps.length) {
+  if (!getApps().length) {
     const raw = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
     if (!raw) throw new Error('Server configuration is incomplete');
-    admin.initializeApp({ credential: admin.credential.cert(JSON.parse(raw)) });
+    initializeApp({ credential: cert(JSON.parse(raw)) });
   }
-  return admin.firestore();
+  return getFirestore();
 }
 const hash = token => createHash('sha256').update(token).digest('hex');
 async function rateLimit(store, id, limit = 60) {
@@ -26,7 +28,7 @@ async function rateLimit(store, id, limit = 60) {
     const windowStart = state.windowStart?.toMillis?.() || 0;
     const count = windowStart < now - 60_000 ? 0 : (state.count || 0);
     if (count >= limit) return false;
-    tx.set(ref, { count: count + 1, windowStart: windowStart < now - 60_000 ? admin.firestore.Timestamp.fromMillis(now) : state.windowStart });
+    tx.set(ref, { count: count + 1, windowStart: windowStart < now - 60_000 ? Timestamp.fromMillis(now) : state.windowStart });
     return true;
   });
 }
@@ -35,7 +37,7 @@ async function authenticate(req, store) {
   if (!token) return { error: response(401, { error: 'Authorization required' }) };
   // Key issuance/revocation uses a Firebase ID token; data endpoints use an ENDGAME API key.
   if (token.startsWith('eyJ')) {
-    try { const decoded = await admin.auth().verifyIdToken(token); return { uid: decoded.uid, mode: 'session' }; }
+    try { const decoded = await getAuth().verifyIdToken(token); return { uid: decoded.uid, mode: 'session' }; }
     catch { return { error: response(401, { error: 'Invalid session token' }) }; }
   }
   const digest = hash(token);
@@ -45,7 +47,7 @@ async function authenticate(req, store) {
   if (keyDoc.data().revoked) return { error: response(401, { error: 'API key revoked' }) };
   const uid = keyDoc.ref.parent.parent.id;
   if (!(await rateLimit(store, `key:${keyDoc.id}`, 60))) return { error: response(429, { error: 'Rate limit exceeded' }) };
-  await keyDoc.ref.update({ lastUsedAt: admin.firestore.FieldValue.serverTimestamp() });
+  await keyDoc.ref.update({ lastUsedAt: FieldValue.serverTimestamp() });
   return { uid, mode: 'api' };
 }
 const dayId = d => d.toISOString().slice(0, 10);
@@ -68,13 +70,13 @@ export const handler = async (event) => {
       if (!name) return response(400, { error: 'Key name is required' });
       if (!(await rateLimit(store, `issue:${session.uid}`, 5))) return response(429, { error: 'Key creation limit reached' });
       const raw = `eg_live_${randomBytes(32).toString('base64url')}`, ref = store.collection('users').doc(session.uid).collection('apiKeys').doc();
-      await ref.set({ name, hash: hash(raw), createdAt: admin.firestore.FieldValue.serverTimestamp(), lastUsedAt: null, revoked: false, permissions: ['read'] });
+      await ref.set({ name, hash: hash(raw), createdAt: FieldValue.serverTimestamp(), lastUsedAt: null, revoked: false, permissions: ['read'] });
       return response(201, { id: ref.id, name, createdAt: new Date().toISOString(), key: raw, permissions: ['read'] });
     }
     const authn = await authenticate(req, store); if (authn.error) return authn.error;
     if (method === 'DELETE' && route.startsWith('keys/')) {
       if (authn.mode !== 'session') return response(403, { error: 'A signed-in session is required' });
-      const id = route.slice(5); await store.doc(`users/${authn.uid}/apiKeys/${id}`).update({ revoked: true, revokedAt: admin.firestore.FieldValue.serverTimestamp() });
+      const id = route.slice(5); await store.doc(`users/${authn.uid}/apiKeys/${id}`).update({ revoked: true, revokedAt: FieldValue.serverTimestamp() });
       return response(200, { ok: true });
     }
     if (method === 'GET' && route === 'keys') {
