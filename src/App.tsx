@@ -29,7 +29,7 @@ export default function App() {
   const pageForPath = (path:string):Page => nav.find(item => `/${item.name.toLowerCase().replace(/ /g,'-')}` === path)?.name || 'Command Center';
   const [user, setUser] = useState<User|null>(null), [page, setPage] = useState<Page>(()=>pageForPath(location.pathname));
   const [days, setDays] = useState<Record<string,Day>>({}), [tasks, setTasks] = useState<Task[]>([]), [notes, setNotes] = useState<Note[]>([]), [settings, setSettings] = useState({ startDate: today, missionDuration: 90, timezone: Intl.DateTimeFormat().resolvedOptions().timeZone });
-  const [selectedDate, setSelectedDate] = useState(today), [loading, setLoading] = useState(true), [authBusy, setAuthBusy] = useState(false), [mobileOpen, setMobileOpen] = useState(false), [toast, setToast] = useState(''), [filter, setFilter] = useState('All to-dos'), [search, setSearch] = useState('');
+  const [selectedDate, setSelectedDate] = useState(today), [loading, setLoading] = useState(true), [authBusy, setAuthBusy] = useState(false), [mobileOpen, setMobileOpen] = useState(false), [toast, setToast] = useState(''), [filter, setFilter] = useState('Today'), [search, setSearch] = useState('');
   const [todoistConnected, setTodoistConnected] = useState(false);
   const [showTask, setShowTask] = useState(false), [editingTask, setEditingTask] = useState<Task|null>(null), [showNote, setShowNote] = useState(false), [editingNote, setEditingNote] = useState<Note|null>(null);
   useEffect(() => setPage(pageForPath(location.pathname)), [location.pathname]);
