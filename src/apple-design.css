@@ -952,3 +952,8 @@ input, textarea, select { max-width: 100%; }
 .delete-all-form .field-label code { justify-self: start; padding: 5px 9px; color: var(--ink); background: var(--surface-raised); border-radius: 8px; font-size: 15px; letter-spacing: .06em; }
 .danger-button { min-height: 44px; padding: 0 15px; color: #fff; background: #ff453a; border: 0; border-radius: 12px; font-weight: 650; }
 .danger-button:disabled { opacity: .45; cursor: not-allowed; }
+.task-title-line { display: flex; align-items: center; gap: 4px; min-width: 0; }
+.task-title-line .task-title { min-width: 0; }
+.task-edit-button { display: inline-grid; flex: none; place-items: center; width: 44px; height: 44px; padding: 0; color: var(--muted); background: transparent; border: 0; border-radius: 12px; }
+.task-edit-button:hover, .task-edit-button:focus-visible { color: var(--accent); background: var(--surface-raised); }
+.task-row.completed .task-edit-button { color: var(--muted); }
