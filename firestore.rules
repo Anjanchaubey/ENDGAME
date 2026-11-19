@@ -1,0 +1,24 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedInAs(uid) { return request.auth != null && request.auth.uid == uid; }
+    match /users/{uid} {
+      allow read, create, update, delete: if signedInAs(uid);
+      match /days/{dayId} {
+        allow read, write: if signedInAs(uid);
+      }
+      match /tasks/{taskId} {
+        allow read, write: if signedInAs(uid);
+      }
+      match /notes/{noteId} {
+        allow read, write: if signedInAs(uid);
+      }
+      match /settings/{settingId} {
+        allow read, write: if signedInAs(uid);
+      }
+      // API key hashes are only accessed by trusted Netlify Functions (Admin SDK).
+      match /apiKeys/{keyId} { allow read, write: if false; }
+    }
+    match /apiRateLimits/{document=**} { allow read, write: if false; }
+  }
+}

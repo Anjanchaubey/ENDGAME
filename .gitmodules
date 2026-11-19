@@ -1,0 +1,3 @@
+[submodule "apple_design"]
+	path = apple_design
+	url = https://github.com/dickwu/apple-design-skill.git
