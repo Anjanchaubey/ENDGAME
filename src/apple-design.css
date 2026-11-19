@@ -935,3 +935,10 @@ input, textarea, select { max-width: 100%; }
 }
 .brand-image { display: block; width: 36px; height: 36px; flex: none; object-fit: cover; background: #000; border-radius: 11px; }
 .boot .brand-image { width: 76px; height: 76px; border-radius: 18px; box-shadow: 0 0 38px rgba(255,214,10,.12); }
+
+.todoist-connect-form { display: grid; gap: 12px; margin-top: 14px; }
+.todoist-connect-form small { color: var(--muted); font-size: 12px; line-height: 1.5; }
+.todoist-connect-form .primary { justify-self: start; min-height: 44px; }
+.todoist-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
+.todoist-connected { display: inline-flex; align-items: center; gap: 8px; margin-right: auto; color: #30d158; font-size: 13px; font-weight: 650; }
+.todoist-connected i { width: 8px; height: 8px; border-radius: 50%; background: currentColor; box-shadow: 0 0 10px rgba(48,209,88,.45); }

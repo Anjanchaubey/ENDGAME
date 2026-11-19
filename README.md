@@ -7,6 +7,7 @@ ENDGAME is a personal study and productivity command center built around a 90-da
 - **Command Center:** today’s journal status, mission progress, study hours, current and best streaks, average rating, and upcoming to-dos.
 - **90-day mission:** browse three 30-day phases, select a day to see its journal details, and update hours, topics, notes, rating, and status.
 - **To-do list:** create, search, filter, complete, and review to-dos.
+- **Todoist sync:** connect a Todoist account in Account & Settings; tasks sync in both directions while ENDGAME is open.
 - **Study notes:** save notes and optional file attachments.
 - **Progress:** review study hours, ratings, streaks, and mission completion.
 - **Account and export:** download a complete JSON backup of all 90 mission days, settings, to-dos, notes, and note attachments, or a CSV summary.
@@ -77,6 +78,8 @@ Set the six `VITE_FIREBASE_*` variables from `.env.example` as Netlify build var
 
 - `FIREBASE_SERVICE_ACCOUNT_JSON`: service account JSON stored as a single-line secret. Keep it out of browser build variables and source control.
 - `ALLOWED_ORIGIN`: the exact deployed site origin, without a trailing slash.
+
+Todoist does not need another Netlify variable. Each signed-in user connects their own personal Todoist API token in **Account & Settings**. ENDGAME encrypts the token on the server. Tasks created or changed in ENDGAME are sent to Todoist immediately; changes made in Todoist are checked about once a minute while ENDGAME is open. Todoist tokens are available in Todoist **Settings → Integrations → Developer**.
 
 Add production and preview hostnames to Firebase Authentication’s authorized domains.
 

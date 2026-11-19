@@ -10,6 +10,7 @@
     "typecheck": "tsc -b"
   },
   "dependencies": {
+    "@todoist/sdk": "^21.1.0",
     "date-fns": "^4.1.0",
     "firebase": "^13.4.0",
     "firebase-admin": "^14.5.1",
@@ -21,7 +22,9 @@
     "recharts": "^2.15.0",
     "zod": "^4.6.7"
   },
-  "overrides": { "@grpc/grpc-js": "^1.14.7" },
+  "overrides": {
+    "@grpc/grpc-js": "^1.14.7"
+  },
   "devDependencies": {
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",

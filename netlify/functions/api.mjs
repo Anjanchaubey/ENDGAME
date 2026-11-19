@@ -2,6 +2,7 @@ import { createHash, randomBytes } from 'node:crypto';
 import { cert, getApps, initializeApp } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
 import { FieldValue, getFirestore, Timestamp } from 'firebase-admin/firestore';
+import { connectTodoist, deleteTodoistTask, disconnectTodoist, pushTaskToTodoist, syncTodoist, todoistStatus } from './todoist-service.mjs';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': process.env.ALLOWED_ORIGIN || 'null',
@@ -50,6 +51,12 @@ async function authenticate(req, store) {
   await keyDoc.ref.update({ lastUsedAt: FieldValue.serverTimestamp() });
   return { uid, mode: 'api' };
 }
+async function requireSession(req, store) {
+  const session = await authenticate(req, store);
+  if (session.error) return { error: session.error };
+  if (session.mode !== 'session') return { error: response(403, { error: 'A signed-in session is required' }) };
+  return { uid: session.uid };
+}
 const dayId = d => d.toISOString().slice(0, 10);
 const zoneDay = (date, zone) => {
   const parts = new Intl.DateTimeFormat('en-CA', { timeZone: zone, year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(date);
@@ -64,6 +71,33 @@ export const handler = async (event) => {
   try {
     const route = requestPath.replace(/^\/+/, '').replace(/^\.netlify\/functions\/api\/?/, '').replace(/^api\/v1\/?/, '');
     const store = db();
+    if (route === 'todoist' || route.startsWith('todoist/')) {
+      const session = await requireSession(req, store);
+      if (session.error) return session.error;
+      if (method === 'GET' && route === 'todoist/status') return response(200, await todoistStatus(store, session.uid));
+      if (method === 'POST' && route === 'todoist/connect') {
+        const token = String(JSON.parse(req.body || '{}').token || '').trim();
+        if (!token) return response(400, { error: 'Enter your Todoist API token.' });
+        try { return response(200, await connectTodoist(store, session.uid, token)); }
+        catch { return response(400, { error: 'Todoist could not verify that token. Check it in Todoist settings and try again.' }); }
+      }
+      if (method === 'POST' && route === 'todoist/sync') {
+        try { return response(200, await syncTodoist(store, session.uid)); }
+        catch { return response(502, { error: 'Todoist could not sync right now. Reconnect it in Account & Settings and try again.' }); }
+      }
+      if (method === 'POST' && route === 'todoist/tasks/upsert') {
+        const body = JSON.parse(req.body || '{}');
+        try { return response(200, await pushTaskToTodoist(store, session.uid, String(body.taskId || ''), body.reopen === true)); }
+        catch { return response(502, { error: 'Could not update Todoist. The to-do remains saved in ENDGAME.' }); }
+      }
+      if (method === 'POST' && route === 'todoist/tasks/delete') {
+        const body = JSON.parse(req.body || '{}');
+        try { return response(200, await deleteTodoistTask(store, session.uid, String(body.taskId || ''))); }
+        catch { return response(502, { error: 'Could not delete the matching Todoist task. Nothing was deleted in ENDGAME.' }); }
+      }
+      if (method === 'DELETE' && route === 'todoist') return response(200, await disconnectTodoist(store, session.uid));
+      return response(404, { error: 'Todoist route not found' });
+    }
     if (method === 'POST' && route === 'keys') {
       const session = await authenticate(req, store); if (session.error) return session.error;
       if (session.mode !== 'session') return response(403, { error: 'A signed-in session is required' });
